@@ -1,0 +1,15 @@
+spring.application.name=reservas
+
+spring.datasource.url=jdbc:mysql://localhost:3306/turnos_db
+spring.datasource.username=TU_USUARIO
+spring.datasource.password=TU_CONTRASEÑA
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+
+jwt.secret= SECRETKEY
+jwt.expiration= TIEMPO DE EXPIRACION
+logging.level.org.springframework.security=TRACE
