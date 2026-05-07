@@ -94,7 +94,7 @@ public class TurnoService {
                 (estadoTurno == EstadoTurno.CANCELADO && turno.getEstado() == EstadoTurno.CONFIRMADO);
 
         if (!transicionValida) {
-            throw new BadRequestException("Denbe introducir una transicion valida");
+            throw new BadRequestException("Debe introducir una transicion valida");
         }
 
         turno.setEstado(estadoTurno);
@@ -104,12 +104,11 @@ public class TurnoService {
     }
 
     // DELETE
-    public TurnoResponseDTO eliminar(Long id) {
+    public void eliminar(Long id) {
 
         Turno turno = turnoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Turno no encontrado con id: " + id));
         turnoRepository.delete(turno);
-        return turnoMapper.turnoToResponse(turno);
     }
 
 }

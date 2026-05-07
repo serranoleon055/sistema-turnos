@@ -1,5 +1,9 @@
 package com.turnos.reservas.dto;
 
+import java.time.LocalDateTime;
+
+import com.turnos.reservas.enums.EstadoTurno;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,5 +24,7 @@ public class TurnoResponseDTO {
     private String nombreServicio;
     private Long idProfesional;
     private String nombreProfesional;
+    private LocalDateTime fechaHora;
+    private EstadoTurno estado;
 
 }

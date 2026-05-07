@@ -39,6 +39,8 @@ public class TurnoMapper {
                 .nombreProfesional(turno.getProfesional().getNombre())
                 .idServicio(turno.getServicio().getId())
                 .nombreServicio(turno.getServicio().getNombre())
+                .fechaHora(turno.getFechaHora())
+                .estado(turno.getEstado())
                 .build();
         return respuesta;
     }
