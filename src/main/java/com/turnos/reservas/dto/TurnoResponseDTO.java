@@ -2,6 +2,7 @@ package com.turnos.reservas.dto;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.turnos.reservas.enums.EstadoTurno;
 
 import lombok.AllArgsConstructor;
@@ -24,7 +25,10 @@ public class TurnoResponseDTO {
     private String nombreServicio;
     private Long idProfesional;
     private String nombreProfesional;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime fechaHora;
+
     private EstadoTurno estado;
 
 }

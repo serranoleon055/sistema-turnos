@@ -44,12 +44,12 @@ public class ServicioService {
         Servicio servicio = servicioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Servicio no encontrado con id: " + id));
 
-        servicio = servicioMapper.requestToServicio(servicioRequestDTO);
-        servicio.setId(id);
+        servicio.setNombre(servicioRequestDTO.getNombre());
+        servicio.setDescripcion(servicioRequestDTO.getDescripcion());
+        servicio.setDuracionMinutos(servicioRequestDTO.getDuracionMinutos());
         servicioRepository.save(servicio);
 
-        ServicioResponseDTO respuesta = servicioMapper.servicioToResponse(servicio);
-        return respuesta;
+        return servicioMapper.servicioToResponse(servicio);
     }
 
     // DELETE

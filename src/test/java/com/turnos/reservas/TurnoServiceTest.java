@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,7 @@ import com.turnos.reservas.entity.Cliente;
 import com.turnos.reservas.entity.Profesional;
 import com.turnos.reservas.entity.Servicio;
 import com.turnos.reservas.entity.Turno;
+import com.turnos.reservas.entity.Usuario;
 import com.turnos.reservas.enums.EstadoTurno;
 import com.turnos.reservas.excepcion.BadRequestException;
 import com.turnos.reservas.excepcion.ResourceNotFoundException;
@@ -29,6 +31,7 @@ import com.turnos.reservas.repository.ClienteRepository;
 import com.turnos.reservas.repository.ProfesionalRepository;
 import com.turnos.reservas.repository.ServicioRepository;
 import com.turnos.reservas.repository.TurnoRepository;
+import com.turnos.reservas.repository.UsuarioRepository;
 import com.turnos.reservas.service.TurnoService;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,168 +39,150 @@ public class TurnoServiceTest {
 
     @Mock
     private TurnoRepository turnoRepository;
-
     @Mock
     private ClienteRepository clienteRepository;
-
     @Mock
     private ProfesionalRepository profesionalRepository;
-
     @Mock
     private ServicioRepository servicioRepository;
-
     @Mock
     private TurnoMapper turnoMapper;
+    @Mock
+    private UsuarioRepository usuarioRepository;
 
     @InjectMocks
     private TurnoService turnoService;
 
+    private final String emailTest = "test@email.com";
+
     @Test
     public void crearTurno_Exitoso() {
-
-        // ARRANGE — preparás todo lo que el método necesita para ejecutarse
-
-        // Creás los objetos que van a "existir" en la base de datos
-        Long idCliente = 1L;
-        Long idProfesional = 1L;
-        Long idServicio = 1L;
-
-        Cliente cliente = new Cliente();
-        cliente.setId(idCliente);
+        Servicio servicio = new Servicio();
+        servicio.setId(1L);
+        servicio.setDuracionMinutos(60);
 
         Profesional profesional = new Profesional();
-        profesional.setId(idProfesional);
+        profesional.setId(1L);
 
-        Servicio servicio = new Servicio();
-        servicio.setId(idServicio);
+        Cliente cliente = new Cliente();
+        cliente.setId(1L);
 
-        // Creás el Turno que el mapper va a devolver
+        Usuario usuario = new Usuario();
+        usuario.setEmail(emailTest);
+
+        LocalDateTime fechaTurno = LocalDateTime.now().plusDays(1);
+
         Turno turno = new Turno();
         turno.setCliente(cliente);
         turno.setProfesional(profesional);
         turno.setServicio(servicio);
-        turno.setFechaHora(LocalDateTime.now().plusDays(1));
+        turno.setFechaHora(fechaTurno);
+        turno.setEstado(EstadoTurno.PENDIENTE);
 
-        // Creás el request que va a recibir el service
-        TurnoRequestDTO turnoRequestDTO = new TurnoRequestDTO();
-        turnoRequestDTO.setIdCliente(idCliente);
-        turnoRequestDTO.setIdProfesional(idProfesional);
-        turnoRequestDTO.setIdServicio(idServicio);
-        turnoRequestDTO.setFechaHora(LocalDateTime.now().plusDays(1));
+        TurnoRequestDTO dto = new TurnoRequestDTO();
+        dto.setIdProfesional(1L);
+        dto.setIdServicio(1L);
+        dto.setFechaHora(fechaTurno);
 
-        // Configurás los mocks — le decís a cada repository qué devolver
-        when(clienteRepository.findById(idCliente)).thenReturn(Optional.of(cliente));
-        when(profesionalRepository.findById(idProfesional)).thenReturn(Optional.of(profesional));
-        when(servicioRepository.findById(idServicio)).thenReturn(Optional.of(servicio));
-        when(turnoRepository.existsByProfesionalAndFechaHora(any(), any())).thenReturn(false);
+        when(usuarioRepository.findByEmail(emailTest)).thenReturn(Optional.of(usuario));
+        when(clienteRepository.findByUsuario(usuario)).thenReturn(Optional.of(cliente));
+        when(profesionalRepository.findById(1L)).thenReturn(Optional.of(profesional));
+        when(servicioRepository.findById(1L)).thenReturn(Optional.of(servicio));
+        when(turnoRepository.findByProfesional(profesional)).thenReturn(List.of());
         when(turnoMapper.requestToTurno(any(), any(), any(), any())).thenReturn(turno);
 
-        // ACT — ejecutás el método que estás testeando
-        turnoService.crearTurno(turnoRequestDTO);
+        turnoService.crearTurno(dto, emailTest);
 
-        // ASSERT — verificás que save fue llamado exactamente una vez
         verify(turnoRepository, times(1)).save(any());
     }
 
     @Test
     public void crearTurno_ProfOcupado() {
-
-        Long idCliente = 1L;
-        Long idProfesional = 1L;
-        Long idServicio = 1L;
-
-        Cliente cliente = new Cliente();
-        cliente.setId(idCliente);
+        Servicio servicio = new Servicio();
+        servicio.setId(1L);
+        servicio.setDuracionMinutos(60);
 
         Profesional profesional = new Profesional();
-        profesional.setId(idProfesional);
+        profesional.setId(1L);
 
-        Servicio servicio = new Servicio();
-        servicio.setId(idServicio);
+        Cliente cliente = new Cliente();
+        cliente.setId(1L);
 
-        Turno turno = new Turno();
-        turno.setCliente(cliente);
-        turno.setProfesional(profesional);
-        turno.setServicio(servicio);
-        turno.setFechaHora(LocalDateTime.now().plusDays(1));
+        Usuario usuario = new Usuario();
+        usuario.setEmail(emailTest);
 
-        TurnoRequestDTO turnoRequestDTO = new TurnoRequestDTO();
-        turnoRequestDTO.setIdCliente(idCliente);
-        turnoRequestDTO.setIdProfesional(idProfesional);
-        turnoRequestDTO.setIdServicio(idServicio);
-        turnoRequestDTO.setFechaHora(LocalDateTime.now().plusDays(1));
+        // El turno nuevo y el existente solapan: mismo profesional, misma hora
+        LocalDateTime fechaTurno = LocalDateTime.now().plusDays(1);
 
-        when(clienteRepository.findById(idCliente)).thenReturn(Optional.of(cliente));
-        when(profesionalRepository.findById(idProfesional)).thenReturn(Optional.of(profesional));
-        when(servicioRepository.findById(idServicio)).thenReturn(Optional.of(servicio));
-        when(turnoRepository.existsByProfesionalAndFechaHora(any(), any())).thenReturn(true);
-        when(turnoMapper.requestToTurno(any(), any(), any(), any())).thenReturn(turno);
+        Turno turnoExistente = new Turno();
+        turnoExistente.setProfesional(profesional);
+        turnoExistente.setServicio(servicio);
+        turnoExistente.setFechaHora(fechaTurno);
+        turnoExistente.setEstado(EstadoTurno.PENDIENTE);
 
-        assertThrows(BadRequestException.class, () -> turnoService.crearTurno(turnoRequestDTO));
+        Turno turnoNuevo = new Turno();
+        turnoNuevo.setCliente(cliente);
+        turnoNuevo.setProfesional(profesional);
+        turnoNuevo.setServicio(servicio);
+        turnoNuevo.setFechaHora(fechaTurno);
+        turnoNuevo.setEstado(EstadoTurno.PENDIENTE);
+
+        TurnoRequestDTO dto = new TurnoRequestDTO();
+        dto.setIdProfesional(1L);
+        dto.setIdServicio(1L);
+        dto.setFechaHora(fechaTurno);
+
+        when(usuarioRepository.findByEmail(emailTest)).thenReturn(Optional.of(usuario));
+        when(clienteRepository.findByUsuario(usuario)).thenReturn(Optional.of(cliente));
+        when(profesionalRepository.findById(1L)).thenReturn(Optional.of(profesional));
+        when(servicioRepository.findById(1L)).thenReturn(Optional.of(servicio));
+        when(turnoRepository.findByProfesional(profesional)).thenReturn(List.of(turnoExistente));
+        when(turnoMapper.requestToTurno(any(), any(), any(), any())).thenReturn(turnoNuevo);
+
+        assertThrows(BadRequestException.class, () -> turnoService.crearTurno(dto, emailTest));
     }
 
     @Test
     public void crearTurno_ClienteNoExiste() {
+        Usuario usuario = new Usuario();
+        usuario.setEmail(emailTest);
 
-        Long idCliente = 1L;
-        Long idProfesional = 1L;
-        Long idServicio = 1L;
+        TurnoRequestDTO dto = new TurnoRequestDTO();
+        dto.setIdProfesional(1L);
+        dto.setIdServicio(1L);
+        dto.setFechaHora(LocalDateTime.now().plusDays(1));
 
-        Profesional profesional = new Profesional();
-        profesional.setId(idProfesional);
+        when(usuarioRepository.findByEmail(emailTest)).thenReturn(Optional.of(usuario));
+        when(clienteRepository.findByUsuario(usuario)).thenReturn(Optional.empty());
 
-        Servicio servicio = new Servicio();
-        servicio.setId(idServicio);
-
-        Turno turno = new Turno();
-        turno.setProfesional(profesional);
-        turno.setServicio(servicio);
-        turno.setFechaHora(LocalDateTime.now().plusDays(1));
-
-        TurnoRequestDTO turnoRequestDTO = new TurnoRequestDTO();
-        turnoRequestDTO.setIdCliente(idCliente);
-        turnoRequestDTO.setIdProfesional(idProfesional);
-        turnoRequestDTO.setIdServicio(idServicio);
-        turnoRequestDTO.setFechaHora(LocalDateTime.now().plusDays(1));
-
-        when(clienteRepository.findById(idCliente)).thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class, () -> turnoService.crearTurno(turnoRequestDTO));
+        assertThrows(ResourceNotFoundException.class, () -> turnoService.crearTurno(dto, emailTest));
     }
 
     @Test
     public void cambiarEstado_Valido() {
-
-        Long idTurno = 1L;
-
         Turno turno = new Turno();
-        turno.setId(idTurno);
+        turno.setId(1L);
         turno.setEstado(EstadoTurno.PENDIENTE);
 
-        TurnoResponseDTO turnoResponseDTO = new TurnoResponseDTO();
-        turnoResponseDTO.setId(idTurno);
+        TurnoResponseDTO response = new TurnoResponseDTO();
+        response.setId(1L);
 
-        when(turnoRepository.findById(idTurno)).thenReturn(Optional.of(turno));
-        when(turnoMapper.turnoToResponse(any())).thenReturn(turnoResponseDTO);
+        when(turnoRepository.findById(1L)).thenReturn(Optional.of(turno));
+        when(turnoMapper.turnoToResponse(any())).thenReturn(response);
 
-        turnoService.cambiarEstado(idTurno, EstadoTurno.CONFIRMADO);
+        turnoService.cambiarEstado(1L, EstadoTurno.CONFIRMADO);
 
         verify(turnoRepository, times(1)).save(any());
     }
 
     @Test
     public void cambiarEstado_Invalido() {
-
-        Long idTurno = 1L;
-
         Turno turno = new Turno();
-        turno.setId(idTurno);
+        turno.setId(1L);
         turno.setEstado(EstadoTurno.CONFIRMADO);
 
-        when(turnoRepository.findById(idTurno)).thenReturn(Optional.of(turno));
+        when(turnoRepository.findById(1L)).thenReturn(Optional.of(turno));
 
         assertThrows(BadRequestException.class, () -> turnoService.cambiarEstado(1L, EstadoTurno.PENDIENTE));
-
     }
-
 }

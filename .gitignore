@@ -1,12 +1,11 @@
-Readme.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-target/
-application.properties
 
+src/main/resources/application.properties
+src/main/resources/application-local.properties
 
 ### STS ###
 .apt_generated

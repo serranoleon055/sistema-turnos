@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.turnos.reservas.dto.AuthRequestDTO;
 import com.turnos.reservas.dto.AuthResponseDTO;
 import com.turnos.reservas.entity.Usuario;
+import com.turnos.reservas.enums.Rol;
 import com.turnos.reservas.repository.UsuarioRepository;
 import com.turnos.reservas.security.JwtService;
 
@@ -33,7 +34,7 @@ public class AuthService {
         Usuario usuario = new Usuario();
         usuario.setEmail(authRequestDTO.getEmail());
         usuario.setContrasena(passwordEncoder.encode(authRequestDTO.getContrasena()));
-        usuario.setRol(authRequestDTO.getRol());
+        usuario.setRol(Rol.CLIENTE);
 
         usuarioRepository.save(usuario);
 

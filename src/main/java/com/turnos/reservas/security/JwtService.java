@@ -15,7 +15,6 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class JwtService {
 
-    // Esto literalmente te lo copie y pegue
     @Value("${jwt.secret}")
     private String secretKey;
 
@@ -23,11 +22,11 @@ public class JwtService {
     private Long expiration;
 
     public String generateToken(UserDetails userDetails) {
-        // Esto literalmente te lo copie y pegue
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .claim("rol", userDetails.getAuthorities())
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -49,7 +48,6 @@ public class JwtService {
     }
 
     public Claims extractAllClaims(String token) {
-        // Esto literalmente te lo copie y pegue
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
@@ -58,7 +56,6 @@ public class JwtService {
     }
 
     public Key getSigningKey() {
-        // Esto literalmente te lo copie y pegue
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }

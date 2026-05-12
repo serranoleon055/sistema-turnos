@@ -1,5 +1,6 @@
 package com.turnos.reservas.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -11,7 +12,9 @@ import com.turnos.reservas.entity.Cliente;
 import com.turnos.reservas.entity.Profesional;
 import com.turnos.reservas.entity.Servicio;
 import com.turnos.reservas.entity.Turno;
+import com.turnos.reservas.entity.Usuario;
 import com.turnos.reservas.enums.EstadoTurno;
+import com.turnos.reservas.enums.Rol;
 import com.turnos.reservas.excepcion.BadRequestException;
 import com.turnos.reservas.excepcion.ResourceNotFoundException;
 import com.turnos.reservas.mapper.TurnoMapper;
@@ -19,96 +22,125 @@ import com.turnos.reservas.repository.ClienteRepository;
 import com.turnos.reservas.repository.ProfesionalRepository;
 import com.turnos.reservas.repository.ServicioRepository;
 import com.turnos.reservas.repository.TurnoRepository;
+import com.turnos.reservas.repository.UsuarioRepository;
 
 @Service
 public class TurnoService {
 
-    private final TurnoRepository turnoRepository;
-    private final TurnoMapper turnoMapper;
-    private final ClienteRepository clienteRepository;
-    private final ServicioRepository servicioRepository;
-    private final ProfesionalRepository profesionalRepository;
+        private final TurnoRepository turnoRepository;
+        private final TurnoMapper turnoMapper;
+        private final ClienteRepository clienteRepository;
+        private final ServicioRepository servicioRepository;
+        private final ProfesionalRepository profesionalRepository;
+        private final UsuarioRepository usuarioRepository;
 
-    public TurnoService(TurnoRepository turnoRepository, TurnoMapper turnoMapper, ClienteRepository clienteRepository,
-            ServicioRepository servicioRepository, ProfesionalRepository profesionalRepository) {
-        this.turnoRepository = turnoRepository;
-        this.turnoMapper = turnoMapper;
-        this.clienteRepository = clienteRepository;
-        this.servicioRepository = servicioRepository;
-        this.profesionalRepository = profesionalRepository;
-    }
-
-    // GET
-    public List<TurnoResponseDTO> obtenerTodos() {
-        return turnoRepository.findAll().stream()
-                .map(turnoMapper::turnoToResponse)
-                .collect(Collectors.toList());
-    }
-
-    public TurnoResponseDTO obtenerPorId(Long id) {
-        Turno turno = turnoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Turno no encontrado con id: " + id));
-
-        TurnoResponseDTO respuesta = turnoMapper.turnoToResponse(turno);
-        return respuesta;
-    }
-
-    // POST
-    public TurnoResponseDTO crearTurno(TurnoRequestDTO turnoRequestDTO) {
-
-        Cliente cliente = clienteRepository.findById(turnoRequestDTO.getIdCliente())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Cliente no encontrado con id: " + turnoRequestDTO.getIdCliente()));
-
-        Servicio servicio = servicioRepository.findById(turnoRequestDTO.getIdServicio())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Servicio no encontrado con id: " + turnoRequestDTO.getIdServicio()));
-
-        Profesional profesional = profesionalRepository.findById(turnoRequestDTO.getIdProfesional())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Profesional no encontrado con id: " + turnoRequestDTO.getIdProfesional()));
-
-        Turno turno = turnoMapper.requestToTurno(turnoRequestDTO, cliente, servicio, profesional);
-
-        boolean ocupado = turnoRepository.existsByProfesionalAndFechaHora(turno.getProfesional(), turno.getFechaHora());
-        if (ocupado) {
-            throw new BadRequestException("El turno ya esta ocupado");
+        public TurnoService(TurnoRepository turnoRepository, TurnoMapper turnoMapper,
+                        ClienteRepository clienteRepository,
+                        ServicioRepository servicioRepository, ProfesionalRepository profesionalRepository,
+                        UsuarioRepository usuarioRepository) {
+                this.turnoRepository = turnoRepository;
+                this.turnoMapper = turnoMapper;
+                this.clienteRepository = clienteRepository;
+                this.servicioRepository = servicioRepository;
+                this.profesionalRepository = profesionalRepository;
+                this.usuarioRepository = usuarioRepository;
         }
 
-        turnoRepository.save(turno);
+        // GET
+        public List<TurnoResponseDTO> obtenerTodos(String email) {
+                Usuario usuario = usuarioRepository.findByEmail(email)
+                                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
-        TurnoResponseDTO respuesta = turnoMapper.turnoToResponse(turno);
-        return respuesta;
-    }
+                if (usuario.getRol() == Rol.ADMIN) {
+                        return turnoRepository.findAll().stream()
+                                        .map(turnoMapper::turnoToResponse)
+                                        .collect(Collectors.toList());
+                }
 
-    // PUT
-    public TurnoResponseDTO cambiarEstado(Long idTurno, EstadoTurno estadoTurno) {
+                Cliente cliente = clienteRepository.findByUsuario(usuario)
+                                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
 
-        Turno turno = turnoRepository.findById(idTurno)
-                .orElseThrow(() -> new ResourceNotFoundException("Turno no encontrado con id: " + idTurno));
-
-        boolean transicionValida = ((estadoTurno == EstadoTurno.CONFIRMADO
-                && turno.getEstado() == EstadoTurno.PENDIENTE) ||
-                (estadoTurno == EstadoTurno.CANCELADO && turno.getEstado() == EstadoTurno.PENDIENTE)) ||
-                (estadoTurno == EstadoTurno.COMPLETADO && turno.getEstado() == EstadoTurno.CONFIRMADO) ||
-                (estadoTurno == EstadoTurno.CANCELADO && turno.getEstado() == EstadoTurno.CONFIRMADO);
-
-        if (!transicionValida) {
-            throw new BadRequestException("Debe introducir una transicion valida");
+                return turnoRepository.findByCliente(cliente).stream()
+                                .map(turnoMapper::turnoToResponse)
+                                .collect(Collectors.toList());
         }
 
-        turno.setEstado(estadoTurno);
-        turnoRepository.save(turno);
+        public TurnoResponseDTO obtenerPorId(Long id) {
+                Turno turno = turnoRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Turno no encontrado con id: " + id));
 
-        return turnoMapper.turnoToResponse(turno);
-    }
+                TurnoResponseDTO respuesta = turnoMapper.turnoToResponse(turno);
+                return respuesta;
+        }
 
-    // DELETE
-    public void eliminar(Long id) {
+        // POST
+        public TurnoResponseDTO crearTurno(TurnoRequestDTO turnoRequestDTO, String email) {
 
-        Turno turno = turnoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Turno no encontrado con id: " + id));
-        turnoRepository.delete(turno);
-    }
+                Usuario usuario = usuarioRepository.findByEmail(email)
+                                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+                Cliente cliente = clienteRepository.findByUsuario(usuario)
+                                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado"));
+
+                Servicio servicio = servicioRepository.findById(turnoRequestDTO.getIdServicio())
+                                .orElseThrow(() -> new ResourceNotFoundException("Servicio no encontrado"));
+
+                Profesional profesional = profesionalRepository.findById(turnoRequestDTO.getIdProfesional())
+                                .orElseThrow(() -> new ResourceNotFoundException("Profesional no encontrado"));
+
+                Turno turno = turnoMapper.requestToTurno(turnoRequestDTO, cliente, servicio, profesional);
+
+                LocalDateTime inicioNuevo = turno.getFechaHora();
+                LocalDateTime finNuevo = inicioNuevo.plusMinutes(servicio.getDuracionMinutos());
+
+                List<Turno> turnosExistentes = turnoRepository.findByProfesional(turno.getProfesional());
+
+                boolean solapamiento = turnosExistentes.stream()
+                                .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)
+                                .anyMatch(t -> {
+                                        LocalDateTime inicioExist = t.getFechaHora();
+                                        LocalDateTime finExist = inicioExist
+                                                        .plusMinutes(t.getServicio().getDuracionMinutos());
+                                        return inicioNuevo.isBefore(finExist) && finNuevo.isAfter(inicioExist);
+                                });
+
+                if (solapamiento)
+                        throw new BadRequestException("El profesional ya tiene un turno en ese horario");
+
+                turnoRepository.save(turno);
+                return turnoMapper.turnoToResponse(turno);
+        }
+
+        // PUT
+        public TurnoResponseDTO cambiarEstado(Long idTurno, EstadoTurno estadoTurno) {
+
+                Turno turno = turnoRepository.findById(idTurno)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Turno no encontrado con id: " + idTurno));
+
+                boolean transicionValida = ((estadoTurno == EstadoTurno.CONFIRMADO
+                                && turno.getEstado() == EstadoTurno.PENDIENTE) ||
+                                (estadoTurno == EstadoTurno.CANCELADO && turno.getEstado() == EstadoTurno.PENDIENTE)) ||
+                                (estadoTurno == EstadoTurno.COMPLETADO && turno.getEstado() == EstadoTurno.CONFIRMADO)
+                                ||
+                                (estadoTurno == EstadoTurno.CANCELADO && turno.getEstado() == EstadoTurno.CONFIRMADO);
+
+                if (!transicionValida) {
+                        throw new BadRequestException("Debe introducir una transicion valida");
+                }
+
+                turno.setEstado(estadoTurno);
+                turnoRepository.save(turno);
+
+                return turnoMapper.turnoToResponse(turno);
+        }
+
+        // DELETE
+        public void eliminar(Long id) {
+
+                Turno turno = turnoRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Turno no encontrado con id: " + id));
+                turnoRepository.delete(turno);
+        }
 
 }

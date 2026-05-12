@@ -27,6 +27,17 @@ public class ClienteMapper {
     public Cliente requestToCliente(ClienteRequestDTO clienteRequestDTO, Usuario usu) {
 
         Cliente cliente = new Cliente();
+        cliente.setNombre(clienteRequestDTO.getNombre());
+        cliente.setApellido(clienteRequestDTO.getApellido());
+        cliente.setEmail(clienteRequestDTO.getEmail());
+        cliente.setTelefono(clienteRequestDTO.getTelefono());
+        cliente.setUsuario(usu);
+
+        return cliente;
+    }
+
+    // puttoCliente
+    public Cliente putToCliente(ClienteRequestDTO clienteRequestDTO, Usuario usu, Cliente cliente) {
 
         cliente.setNombre(clienteRequestDTO.getNombre());
         cliente.setApellido(clienteRequestDTO.getApellido());

@@ -27,7 +27,7 @@ public class UsuarioService {
     // GET
     public List<UsuarioResponseDTO> obtenerTodos() {
 
-        return usuarioRepository.findAll()
+        return usuarioRepository.findAllWithCliente()
                 .stream()
                 .map(usuarioMapper::usuarioToResponse)
                 .collect(Collectors.toList());

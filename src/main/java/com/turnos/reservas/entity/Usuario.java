@@ -7,11 +7,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.turnos.reservas.enums.Rol;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -38,7 +40,8 @@ public class Usuario implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Rol rol;
 
-    @OneToOne(mappedBy = "usuario")
+    @JsonIgnore
+    @OneToOne(mappedBy = "usuario", fetch = FetchType.LAZY)
     private Cliente cliente;
 
     @Override

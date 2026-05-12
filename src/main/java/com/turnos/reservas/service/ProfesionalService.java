@@ -8,20 +8,24 @@ import org.springframework.stereotype.Service;
 import com.turnos.reservas.dto.ProfesionalRequestDTO;
 import com.turnos.reservas.dto.ProfesionalResponseDTO;
 import com.turnos.reservas.entity.Profesional;
+import com.turnos.reservas.entity.Servicio;
 import com.turnos.reservas.excepcion.ResourceNotFoundException;
 import com.turnos.reservas.mapper.ProfesionalMapper;
 import com.turnos.reservas.repository.ProfesionalRepository;
+import com.turnos.reservas.repository.ServicioRepository;
 
 @Service
 public class ProfesionalService {
 
     private final ProfesionalRepository profesionalRepository;
-
     private final ProfesionalMapper profesionalMapper;
+    private final ServicioRepository servicioRepository;
 
-    public ProfesionalService(ProfesionalRepository profesionalRepository, ProfesionalMapper profesionalMapper) {
+    public ProfesionalService(ProfesionalRepository profesionalRepository, ProfesionalMapper profesionalMapper,
+            ServicioRepository servicioRepository) {
         this.profesionalMapper = profesionalMapper;
         this.profesionalRepository = profesionalRepository;
+        this.servicioRepository = servicioRepository;
     }
 
     // GET
@@ -56,16 +60,20 @@ public class ProfesionalService {
 
     // PUT
     public ProfesionalResponseDTO actualizar(Long id, ProfesionalRequestDTO profesionalRequestDTO) {
-
         Profesional profesional = profesionalRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Profesional no encontrado con id:" + id));
 
-        profesional = profesionalMapper.requestToProfesional(profesionalRequestDTO);
-        profesional.setId(id);
-        profesionalRepository.save(profesional);
+        profesional.setNombre(profesionalRequestDTO.getNombre());
+        profesional.setApellido(profesionalRequestDTO.getApellido());
+        profesional.setEspecialidad(profesionalRequestDTO.getEspecialidad());
 
-        ProfesionalResponseDTO respuesta = profesionalMapper.profesionalToResponse(profesional);
-        return respuesta;
+        if (profesionalRequestDTO.getServicioIds() != null) {
+            List<Servicio> servicios = servicioRepository.findAllById(profesionalRequestDTO.getServicioIds());
+            profesional.setServicios(servicios);
+        }
+
+        profesionalRepository.save(profesional);
+        return profesionalMapper.profesionalToResponse(profesional);
     }
 
     // DELETE

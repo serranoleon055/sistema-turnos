@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,9 +37,11 @@ public class ClienteController {
     }
 
     @PostMapping
-    public ResponseEntity<ClienteResponseDTO> crearCliente(@Valid @RequestBody ClienteRequestDTO clienteRequestDTO) {
+    public ResponseEntity<ClienteResponseDTO> crearCliente(@Valid @RequestBody ClienteRequestDTO clienteRequestDTO,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        ClienteResponseDTO clienteResponseDTO = clienteService.crearCliente(clienteRequestDTO);
+        ClienteResponseDTO clienteResponseDTO = clienteService.crearCliente(clienteRequestDTO,
+                userDetails.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(clienteResponseDTO);
     }
 
@@ -49,9 +53,9 @@ public class ClienteController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ClienteResponseDTO> actualizar(@PathVariable Long id,
-            @Valid @RequestBody ClienteRequestDTO clienteRequestDTO) {
+            @Valid @RequestBody ClienteRequestDTO clienteRequestDTO, @AuthenticationPrincipal UserDetails userDetails) {
 
-        ClienteResponseDTO cliente = clienteService.actualizar(id, clienteRequestDTO);
+        ClienteResponseDTO cliente = clienteService.actualizar(id, clienteRequestDTO, userDetails.getUsername());
         return ResponseEntity.ok(cliente);
     }
 

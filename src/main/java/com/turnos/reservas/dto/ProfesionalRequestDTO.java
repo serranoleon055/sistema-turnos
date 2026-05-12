@@ -1,5 +1,7 @@
 package com.turnos.reservas.dto;
 
+import java.util.List;
+
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,5 +22,7 @@ public class ProfesionalRequestDTO {
 
     @NotBlank(message = "La especialidad no puede estar vacia")
     private String especialidad;
+
+    private List<Long> servicioIds;
 
 }

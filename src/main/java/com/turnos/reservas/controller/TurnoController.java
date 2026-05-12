@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,8 +35,8 @@ public class TurnoController {
 
     // GET
     @GetMapping
-    public ResponseEntity<List<TurnoResponseDTO>> obtenerTodos() {
-        return ResponseEntity.ok(turnoService.obtenerTodos());
+    public ResponseEntity<List<TurnoResponseDTO>> obtenerTodos(@AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(turnoService.obtenerTodos(userDetails.getUsername()));
     }
 
     @GetMapping("/{id}")
@@ -44,8 +46,10 @@ public class TurnoController {
     }
 
     @PostMapping
-    public ResponseEntity<TurnoResponseDTO> crearTurno(@Valid @RequestBody TurnoRequestDTO turnoRequestDTO) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(turnoService.crearTurno(turnoRequestDTO));
+    public ResponseEntity<TurnoResponseDTO> crearTurno(@Valid @RequestBody TurnoRequestDTO turnoRequestDTO,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(turnoService.crearTurno(turnoRequestDTO, userDetails.getUsername()));
     }
 
     // PUT
